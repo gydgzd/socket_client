@@ -30,46 +30,47 @@ using namespace std;
 #endif
 struct MSGBODY
 {
-	BYTE msg[MAXLENGTH];
-	int length;
+    BYTE msg[MAXLENGTH];
+    int length;
 };
 /*
  * use to form a string clientIP:clientPort--> serverIP:serverPort
  */
 struct CONNECTION
 {
-	int  socket_fd ;       //
-	int  clientPort ;      //
-	int  serverPort ;
-	char clientIP[64] ;
-	char serverIP[64] ;
+    int  socket_fd ;       //
+    int  clientPort ;      //
+    int  serverPort ;
+    char clientIP[64] ;
+    char serverIP[64] ;
 };
 class MySocket_client
 {
 public:
-	int mn_socket_fd;
-	MySocket_client();
-	~MySocket_client();
+    int mn_socket_fd;
+    MySocket_client();
+    ~MySocket_client();
+    int init(queue<MSGBODY> * msgQToRecv, queue<MSGBODY> * msgQToSend);
 
-	int connectTo(const char* server_IP, int server_port);// connect
-	int setMsg(const char *);
-	int getMsg();
-	int sendMsg();                 // transfer message
-	int fileSend();                // transfer file
+    int connectTo(const char* server_IP, int server_port);// connect
+    int setMsg(const char *);
+    int getMsg();
+    int sendMsg();                 // transfer message
+    int fileSend();                // transfer file
 
+    Mylog mylog;
 private:
 
-	struct sockaddr_in m_clientAddr;
-	CONNECTION m_conn;
-   MSGBODY m_recvBuf;   // to be determined
-	MSGBODY m_sendBuf;
-   queue<MSGBODY> * mq_msgQueueRecv; // a queue of string to storage the msg from client
-   queue<MSGBODY> * mq_msgQueueSend;
+    struct sockaddr_in m_clientAddr;
+    CONNECTION m_conn;
 
-   Mylog mylog;
+    queue<MSGBODY>  m_msgQueueRecv;  // a queue to storage the msg
+    queue<MSGBODY>  m_msgQueueSend;
 
-	int init();                     // socket()
-	int myclose();                  // close socket
+    queue<MSGBODY> * mp_msgQueueRecv; // pointer to queue
+    queue<MSGBODY> * mp_msgQueueSend;
+
+    int myclose();                  // close socket
 };
 
 #endif /* MYSOCKET_CLIENT_H_ */
