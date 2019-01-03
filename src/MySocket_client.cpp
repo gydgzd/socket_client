@@ -46,6 +46,7 @@ int MySocket_client::init(queue<MSGBODY> * msgQToRecv, queue<MSGBODY> * msgQToSe
 int MySocket_client::connectTo(const char* server_IP, int server_port)
 {
     char logmsg[512] = "";
+    mylog.logException("****************************BEGIN****************************");
     if( inet_pton(AF_INET, server_IP, &m_clientAddr.sin_addr) <= 0)
     {
         sprintf(logmsg, "ERROR: connectTo %s error, inet_pton error: %s\n", server_IP, strerror(errno));
