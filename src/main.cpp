@@ -20,8 +20,7 @@ int main(int argc, char **argv)
     queue<MSGBODY> msgQueueRecv;
     queue<MSGBODY> msgQueueSend;
     sc.init(&msgQueueRecv, &msgQueueSend);
-    sc.mylog.logException("****************************BEGIN****************************");
-    while (-1 == (ret = sc.connectTo("172.18.10.129", 3401)))
+    while (-1 == (ret = sc.connectTo("172.18.10.129", 3402)))
     {
         sleep(60);
     }

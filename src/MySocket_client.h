@@ -30,8 +30,9 @@ using namespace std;
 #endif
 struct MSGBODY
 {
-    BYTE msg[MAXLENGTH];
+    int type;              // 0:int, 1:string, 2: byte(hex)
     int length;
+    BYTE msg[MAXLENGTH];
 };
 /*
  * use to form a string clientIP:clientPort--> serverIP:serverPort
@@ -50,6 +51,7 @@ public:
     int mn_socket_fd;
     MySocket_client();
     ~MySocket_client();
+
     int init(queue<MSGBODY> * msgQToRecv, queue<MSGBODY> * msgQToSend);
 
     int connectTo(const char* server_IP, int server_port);// connect
@@ -64,8 +66,8 @@ private:
     struct sockaddr_in m_clientAddr;
     CONNECTION m_conn;
 
-    queue<MSGBODY>  m_msgQueueRecv;  // a queue to storage the msg
-    queue<MSGBODY>  m_msgQueueSend;
+    static queue<MSGBODY>  m_msgQueueRecv;  // a queue to storage the msg
+    static queue<MSGBODY>  m_msgQueueSend;
 
     queue<MSGBODY> * mp_msgQueueRecv; // pointer to queue
     queue<MSGBODY> * mp_msgQueueSend;

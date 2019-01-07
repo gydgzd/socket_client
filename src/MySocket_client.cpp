@@ -15,17 +15,22 @@ MySocket_client::MySocket_client()
     mp_msgQueueSend = NULL;
     mylog.setMaxFileSize(200*1024*1024);      // 200MB
 
-    init(&m_msgQueueRecv, &m_msgQueueRecv);
+//    init(&m_msgQueueRecv, &m_msgQueueRecv);
 }
 
 MySocket_client::~MySocket_client()
 {
     close(mn_socket_fd);
 }
-// this can call outside the constructor to use outside queue
-int MySocket_client::init(queue<MSGBODY> * msgQToRecv, queue<MSGBODY> * msgQToSend)
+
+/*
+ * initialize to use outside queue,
+ * if not specified, use member queue
+ */
+int MySocket_client::init(queue<MSGBODY> * msgQToRecv = &m_msgQueueRecv, queue<MSGBODY> * msgQToSend = &m_msgQueueSend)
 {
     char logmsg[512] = "";
+    mylog.logException("****************************BEGIN****************************");
     if( (mn_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         sprintf(logmsg, "ERROR: Create socket error: %s(errno: %d)\n", strerror(errno), errno);
@@ -46,7 +51,6 @@ int MySocket_client::init(queue<MSGBODY> * msgQToRecv, queue<MSGBODY> * msgQToSe
 int MySocket_client::connectTo(const char* server_IP, int server_port)
 {
     char logmsg[512] = "";
-    mylog.logException("****************************BEGIN****************************");
     if( inet_pton(AF_INET, server_IP, &m_clientAddr.sin_addr) <= 0)
     {
         sprintf(logmsg, "ERROR: connectTo %s error, inet_pton error: %s\n", server_IP, strerror(errno));
@@ -92,6 +96,7 @@ int MySocket_client::connectTo(const char* server_IP, int server_port)
 int MySocket_client::setMsg(const char *str)
 {
     MSGBODY mymsg;
+    mymsg.type = 1;
     memset(mymsg.msg, 0, sizeof(mymsg));
     int length = strlen(str);
     memcpy(mymsg.msg, str, length);
@@ -104,13 +109,9 @@ int MySocket_client::getMsg()
     MSGBODY mymsg;
     memset(mymsg.msg, 0, sizeof(mymsg));
 
-    char *s = fgets((char *)mymsg.msg, MAXLENGTH, stdin);
-    if(s == NULL)
-        return -1;
-    else
-    {
-        mymsg.length = strlen(s);
-    }
+//    char *s = fgets((char *)mymsg.msg, MAXLENGTH, stdin);
+    sprintf((char *)mymsg.msg, "world");
+    mymsg.type = 1;
     mp_msgQueueSend->push(mymsg);
     return 0;
 }
@@ -133,7 +134,7 @@ int MySocket_client::sendMsg()
     sprintf(logmsg, "INFO: %s: send: %s", logHead, mp_msgQueueSend->front().msg);
     mylog.logException(logmsg);
     mp_msgQueueSend->pop();
-
+    // recv
     char * p_hexLog = NULL;
     if((recvBuf.length = recv(mn_socket_fd, recvBuf.msg, MAXLINE, 0)) == -1)
     {
@@ -149,8 +150,23 @@ int MySocket_client::sendMsg()
     }
     else
     {
+        if(strcmp((char *)recvBuf.msg,"exit\n")==0 || recvBuf.length == 0)
+        {
+            close(mn_socket_fd);
+            mylog.logException("INFO: Remote server disconnected. Exit.");
+            return -1;
+        }
+        mp_msgQueueRecv->push(recvBuf);
         try
         {
+            if(recvBuf.type == 1)
+            {
+            char logmsg[1024];
+            sprintf(logmsg, "INFO: %s recved: %s",logHead, recvBuf.msg);
+            mylog.logException(logmsg);
+            }
+            else if(recvBuf.type == 2)
+            {
             p_hexLog = new char[recvBuf.length*3 + 128];    // include the logHead
             memset(p_hexLog, 0, recvBuf.length*3 + 128);
             sprintf(p_hexLog, "INFO: %s recved: ", logHead);
@@ -159,20 +175,14 @@ int MySocket_client::sendMsg()
                 sprintf(p_hexLog+len+3*i, "%02x ", (unsigned char)recvBuf.msg[i]);
             mylog.logException(p_hexLog);
             delete[] p_hexLog;
+            }
+
         }
         catch(bad_alloc& bad)
         {
             sprintf(logmsg,"ERROR: Failed to alloc mem when log hex: %s", bad.what());
             mylog.logException(logmsg);
 		}
-
-        if(strcmp((char *)recvBuf.msg,"exit\n")==0)
-        {
-            close(mn_socket_fd);
-            mylog.logException("INFO: exit.");
-            return -1;
-        }
-        mp_msgQueueRecv->push(recvBuf);
     }
     memset(recvBuf.msg, 0, recvBuf.length);
     return 0;
