@@ -20,16 +20,16 @@ int main(int argc, char **argv)
     queue<MSGBODY> msgQueueRecv;
     queue<MSGBODY> msgQueueSend;
     sc.init(&msgQueueRecv, &msgQueueSend);
-    while (-1 == (ret = sc.connectTo("172.18.10.129", 3402)))
+    while (-1 == (ret = sc.myconnect("172.18.10.129", 3402)))
     {
-        sleep(60);
+        sleep(6);
     }
     while(true)
     {
-        ret = sc.getMsg();
+        ret = sc.setMsg();
         if(-1 == ret)       // error
             continue;
-//		sc.setMsg("\n");
+
         ret = sc.sendMsg();
         if(ret == -1)
             break;

@@ -54,15 +54,15 @@ public:
 
     int init(queue<MSGBODY> * msgQToRecv, queue<MSGBODY> * msgQToSend);
 
-    int connectTo(const char* server_IP, int server_port);// connect
+    int myconnect(const char* server_IP, int server_port);// connect
+    int reconnect();
     int setMsg(const char *);
-    int getMsg();
+    int setMsg();
     int sendMsg();                 // transfer message
     int fileSend();                // transfer file
 
     Mylog mylog;
 private:
-
     struct sockaddr_in m_clientAddr;
     CONNECTION m_conn;
 

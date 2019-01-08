@@ -48,7 +48,7 @@ int MySocket_client::init(queue<MSGBODY> * msgQToRecv = &m_msgQueueRecv, queue<M
 /*
  * connect to a server by IP
  */
-int MySocket_client::connectTo(const char* server_IP, int server_port)
+int MySocket_client::myconnect(const char* server_IP, int server_port)
 {
     char logmsg[512] = "";
     if( inet_pton(AF_INET, server_IP, &m_clientAddr.sin_addr) <= 0)
@@ -93,6 +93,25 @@ int MySocket_client::connectTo(const char* server_IP, int server_port)
     fcntl(mn_socket_fd, F_SETFL, flags | O_NONBLOCK);
     return 0;
 }
+
+int MySocket_client::reconnect()
+{
+    char logmsg[512] = "";
+    if( (mn_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        sprintf(logmsg, "ERROR: Create socket error: %s(errno: %d)\n", strerror(errno), errno);
+        mylog.logException(logmsg);
+        exit(-1);
+    }
+    while( connect(mn_socket_fd, (struct sockaddr*)&m_clientAddr, sizeof(m_clientAddr)) < 0)
+    {
+        sprintf(logmsg, "ERROR: reconnect error: %s(errno: %d)\n", strerror(errno), errno);
+        mylog.logException(logmsg);
+        sleep(6);
+    }
+    mylog.logException("INFO: reconnect successfully.");
+    return 0;
+}
 int MySocket_client::setMsg(const char *str)
 {
     MSGBODY mymsg;
@@ -100,17 +119,18 @@ int MySocket_client::setMsg(const char *str)
     memset(mymsg.msg, 0, sizeof(mymsg));
     int length = strlen(str);
     memcpy(mymsg.msg, str, length);
+    mymsg.length = length;
     mp_msgQueueSend->push(mymsg);
     return 0;
 }
 // get msg from keyboard
-int MySocket_client::getMsg()
+int MySocket_client::setMsg()
 {
     MSGBODY mymsg;
     memset(mymsg.msg, 0, sizeof(mymsg));
 
 //    char *s = fgets((char *)mymsg.msg, MAXLENGTH, stdin);
-    sprintf((char *)mymsg.msg, "world");
+    mymsg.length = sprintf((char *)mymsg.msg, "world");
     mymsg.type = 1;
     mp_msgQueueSend->push(mymsg);
     return 0;
@@ -124,15 +144,20 @@ int MySocket_client::sendMsg()
     char logHead[64] = "";
     sprintf(logHead, "%s:%d --> %s:%d ", m_conn.clientIP, m_conn.clientPort, m_conn.serverIP, m_conn.serverPort);
     // send
-    if( send(mn_socket_fd, mp_msgQueueSend->front().msg, mp_msgQueueSend->front().length, 0) < 0)
+    int sendLen = sizeof(mp_msgQueueSend->front().length) + sizeof(mp_msgQueueSend->front().type) + mp_msgQueueSend->front().length;
+    if( send(mn_socket_fd, &mp_msgQueueSend->front(), sendLen, 0) < 0)
     {
         sprintf(logmsg, "ERROR: %s: send msg error: %s(errno: %d)", logHead, strerror(errno), errno);
         mylog.logException(logmsg);
         close(mn_socket_fd);
-        exit(-1);
+        reconnect();
     }
-    sprintf(logmsg, "INFO: %s: send: %s", logHead, mp_msgQueueSend->front().msg);
-    mylog.logException(logmsg);
+    if(mp_msgQueueSend->front().type == 1)
+    {
+        sprintf(logmsg, "INFO: %s: send: %s", logHead, mp_msgQueueSend->front().msg);
+        mylog.logException(logmsg);
+    }
+
     mp_msgQueueSend->pop();
     // recv
     char * p_hexLog = NULL;
@@ -154,7 +179,7 @@ int MySocket_client::sendMsg()
         {
             close(mn_socket_fd);
             mylog.logException("INFO: Remote server disconnected. Exit.");
-            return -1;
+            reconnect();
         }
         mp_msgQueueRecv->push(recvBuf);
         try
@@ -176,7 +201,6 @@ int MySocket_client::sendMsg()
             mylog.logException(p_hexLog);
             delete[] p_hexLog;
             }
-
         }
         catch(bad_alloc& bad)
         {
