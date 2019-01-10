@@ -28,10 +28,11 @@ using namespace std;
 #ifndef BYTE
 #define BYTE unsigned char
 #endif
+#define MSGHEAD_LENGTH 8
 struct MSGBODY
 {
     int type;              // 0:int, 1:string, 2: byte(hex)
-    int length;
+    int length;            // length of msg
     BYTE msg[MAXLENGTH];
 };
 /*
@@ -53,11 +54,12 @@ public:
     ~MySocket_client();
 
     int init(queue<MSGBODY> * msgQToRecv, queue<MSGBODY> * msgQToSend);
-
+    int setBuffer();
     int myconnect(const char* server_IP, int server_port);// connect
     int reconnect();
     int setMsg(const char *);
-    int setMsg();
+
+    int recvMsg();
     int sendMsg();                 // transfer message
     int fileSend();                // transfer file
 
@@ -71,6 +73,8 @@ private:
 
     queue<MSGBODY> * mp_msgQueueRecv; // pointer to queue
     queue<MSGBODY> * mp_msgQueueSend;
+
+    int logMsg(const MSGBODY *recvMsg, const char *logHead);
 
     int myclose();                  // close socket
 };

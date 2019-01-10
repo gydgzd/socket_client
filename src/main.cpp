@@ -19,20 +19,24 @@ int main(int argc, char **argv)
 
     queue<MSGBODY> msgQueueRecv;
     queue<MSGBODY> msgQueueSend;
-    sc.init(&msgQueueRecv, &msgQueueSend);
-    while (-1 == (ret = sc.myconnect("172.18.10.129", 3402)))
+    sc.init(&msgQueueSend, &msgQueueSend);
+    while (-1 == (ret = sc.myconnect("172.18.10.129", 33402)))
     {
         sleep(6);
     }
+    ret = sc.setMsg("world");
+    sc.setBuffer();
+    sc.sendMsg();
     while(true)
     {
-        ret = sc.setMsg();
+   //     ret = sc.setMsg("world");
         if(-1 == ret)       // error
             continue;
-
-        ret = sc.sendMsg();
+        usleep(10000);
+        ret = sc.recvMsg();
         if(ret == -1)
             break;
+        sc.sendMsg();
     }
 //	fileTransfer(argc, argv);
 
