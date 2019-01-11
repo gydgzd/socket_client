@@ -50,21 +50,21 @@ int MySocket_client::setBuffer()
     // get buffer
     int s_length, r_length;
     socklen_t optl = sizeof(s_length);
-    getsockopt(m_conn.socket_fd,SOL_SOCKET,SO_SNDBUF,&s_length,&optl);     //»ñµÃÁ¬½ÓÌ×½Ó×Ö·¢ËÍ¶Ë»º³åÇøµÄÐÅÏ¢
-    getsockopt(m_conn.socket_fd,SOL_SOCKET,SO_RCVBUF,&r_length,&optl);     //»ñµÃÁ¬½ÓÌ×½Ó×ÖµÄ½ÓÊÕ¶ËµÄ»º³åÇøÐÅÏ¢
+    getsockopt(m_conn.socket_fd,SOL_SOCKET,SO_SNDBUF,&s_length,&optl);     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×½ï¿½ï¿½Ö·ï¿½ï¿½Í¶Ë»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
+    getsockopt(m_conn.socket_fd,SOL_SOCKET,SO_RCVBUF,&r_length,&optl);     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×½ï¿½ï¿½ÖµÄ½ï¿½ï¿½Õ¶ËµÄ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
     printf("send buffer = %d, recv buffer = %d\n",s_length, r_length);
  /* */
 
     // set buffer
-/*  int nRecvBufSize = 64*1024;//ÉèÖÃÎª64K
+/*  int nRecvBufSize = 64*1024;//ï¿½ï¿½ï¿½ï¿½Îª64K
     setsockopt(m_conn.socket_fd,SOL_SOCKET,SO_RCVBUF,(const char*)&nRecvBufSize,sizeof(int));
-    int nSendBufSize = 64*1024;//ÉèÖÃÎª64K
+    int nSendBufSize = 64*1024;//ï¿½ï¿½ï¿½ï¿½Îª64K
     setsockopt(m_conn.socket_fd,SOL_SOCKET,SO_SNDBUF,(const char*)&nSendBufSize,sizeof(int));
 */
     return 0;
 }
 /*
- * connect to a server by IP
+ * connect to a server
  */
 int MySocket_client::myconnect(const char* server_IP, int server_port)
 {
@@ -159,11 +159,11 @@ int MySocket_client::recvMsg()
            int err = errno;
            sprintf(logmsg, "ERROR: %s: recv error: %d--%s",logHead, errno, strerror(errno) );
            mylog.logException(logmsg);
-           if(err == 9)
-               {
-               mylog.logException("ERROR: exit.");
-               return 0;
-               }
+            if(err == 9)
+            {
+                mylog.logException("ERROR: exit.");
+                return 0;
+            }
         }
         usleep(10000);
         return 0;
@@ -204,30 +204,31 @@ int MySocket_client::recvMsg()
            return 0;      // stop after reconnect
        }
        mp_msgQueueRecv->push(recvMsg);
-       try
+
+       if(recvMsg.type == 1)
+        {
+            char logmsg[1024];
+            sprintf(logmsg, "INFO: %s recved: %s",logHead, recvMsg.msg);
+            mylog.logException(logmsg);
+        }
+       else if(recvMsg.type == 2)
        {
-           if(recvMsg.type == 1)
-           {
-           char logmsg[1024];
-           sprintf(logmsg, "INFO: %s recved: %s",logHead, recvMsg.msg);
-           mylog.logException(logmsg);
+            try
+            {
+            p_hexLog = new char[recvMsg.length*3 + 128];    // include the logHead
+            memset(p_hexLog, 0, recvMsg.length*3 + 128);
+            sprintf(p_hexLog, "INFO: %s recved: ", logHead);
+            int len = strlen(p_hexLog);
+            for(int i=0; i<recvMsg.length; i++)
+                sprintf(p_hexLog+len+3*i, "%02x ", (unsigned char)recvMsg.msg[i]);
+            mylog.logException(p_hexLog);
+            delete[] p_hexLog;
            }
-           else if(recvMsg.type == 2)
+            catch(bad_alloc& bad)
            {
-           p_hexLog = new char[recvMsg.length*3 + 128];    // include the logHead
-           memset(p_hexLog, 0, recvMsg.length*3 + 128);
-           sprintf(p_hexLog, "INFO: %s recved: ", logHead);
-           int len = strlen(p_hexLog);
-           for(int i=0; i<recvMsg.length; i++)
-               sprintf(p_hexLog+len+3*i, "%02x ", (unsigned char)recvMsg.msg[i]);
-           mylog.logException(p_hexLog);
-           delete[] p_hexLog;
-           }
-       }
-       catch(bad_alloc& bad)
-       {
            sprintf(logmsg,"ERROR: Failed to alloc mem when log hex: %s", bad.what());
            mylog.logException(logmsg);
+           }
        }
     }
     memset(recvMsg.msg, 0, recvMsg.length);
