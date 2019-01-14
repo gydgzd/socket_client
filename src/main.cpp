@@ -27,9 +27,13 @@ int main(int argc, char **argv)
     ret = sc.setMsg("world");
     sc.setBuffer();
     sc.sendMsg();
+    int i = 0;
+    char msg[10] = "";
     while(true)
     {
-   //     ret = sc.setMsg("world");
+        i++;
+       sprintf(msg, "%d", i);
+        ret = sc.setMsg(msg);
         if(-1 == ret)       // error
             continue;
         usleep(10000);

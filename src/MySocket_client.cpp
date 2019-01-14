@@ -50,15 +50,15 @@ int MySocket_client::setBuffer()
     // get buffer
     int s_length, r_length;
     socklen_t optl = sizeof(s_length);
-    getsockopt(m_conn.socket_fd,SOL_SOCKET,SO_SNDBUF,&s_length,&optl);     //��������׽��ַ��Ͷ˻���������Ϣ
-    getsockopt(m_conn.socket_fd,SOL_SOCKET,SO_RCVBUF,&r_length,&optl);     //��������׽��ֵĽ��ն˵Ļ�������Ϣ
+    getsockopt(m_conn.socket_fd,SOL_SOCKET,SO_SNDBUF,&s_length,&optl);     //锟斤拷锟斤拷锟斤拷锟斤拷捉锟斤拷址锟斤拷投嘶锟斤拷锟斤拷锟斤拷锟斤拷锟较�
+    getsockopt(m_conn.socket_fd,SOL_SOCKET,SO_RCVBUF,&r_length,&optl);     //锟斤拷锟斤拷锟斤拷锟斤拷捉锟斤拷值慕锟斤拷斩说幕锟斤拷锟斤拷锟斤拷锟较�
     printf("send buffer = %d, recv buffer = %d\n",s_length, r_length);
  /* */
 
     // set buffer
-/*  int nRecvBufSize = 64*1024;//����Ϊ64K
+/*  int nRecvBufSize = 64*1024;//锟斤拷锟斤拷为64K
     setsockopt(m_conn.socket_fd,SOL_SOCKET,SO_RCVBUF,(const char*)&nRecvBufSize,sizeof(int));
-    int nSendBufSize = 64*1024;//����Ϊ64K
+    int nSendBufSize = 64*1024;//锟斤拷锟斤拷为64K
     setsockopt(m_conn.socket_fd,SOL_SOCKET,SO_SNDBUF,(const char*)&nSendBufSize,sizeof(int));
 */
     return 0;
@@ -100,7 +100,7 @@ int MySocket_client::myconnect(const char* server_IP, int server_port)
 
     sprintf(logmsg, "INFO: %s:%d --> %s:%d connected", m_conn.clientIP, m_conn.clientPort, m_conn.serverIP, m_conn.serverPort);
     mylog.logException(logmsg);
-    // 使用非阻塞io
+    // 浣跨敤闈為樆濉瀒o
     int flags;
     if( (flags = fcntl(mn_socket_fd, F_GETFL, 0)) < 0)
     {
@@ -161,7 +161,8 @@ int MySocket_client::recvMsg()
            mylog.logException(logmsg);
             if(err == 9)
             {
-                mylog.logException("ERROR: exit.");
+                close(mn_socket_fd);
+                reconnect();
                 return 0;
             }
         }
