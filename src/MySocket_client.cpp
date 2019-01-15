@@ -100,7 +100,7 @@ int MySocket_client::myconnect(const char* server_IP, int server_port)
 
     sprintf(logmsg, "INFO: %s:%d --> %s:%d connected", m_conn.clientIP, m_conn.clientPort, m_conn.serverIP, m_conn.serverPort);
     mylog.logException(logmsg);
-    // 浣跨敤闈為樆濉瀒o
+    // set nonlocking mode
     int flags;
     if( (flags = fcntl(mn_socket_fd, F_GETFL, 0)) < 0)
     {
@@ -128,6 +128,15 @@ int MySocket_client::reconnect()
         sleep(6);
     }
     mylog.logException("INFO: reconnect successfully.");
+    // set nonlocking mode
+    int flags;
+    if( (flags = fcntl(mn_socket_fd, F_GETFL, 0)) < 0)
+    {
+        sprintf(logmsg, "ERROR: fcntl error: %d--%s", errno, strerror(errno) );
+        mylog.logException(logmsg);
+        return -1;
+    }
+    fcntl(mn_socket_fd, F_SETFL, flags | O_NONBLOCK);
     return 0;
 }
 int MySocket_client::setMsg(const char *str)

@@ -21,12 +21,13 @@ int main(int argc, char **argv)
     queue<MSGBODY> msgQueueSend;
     sc.init(&msgQueueSend, &msgQueueSend);
     while (-1 == (ret = sc.myconnect("172.18.10.129", 33402)))
+//    while (-1 == (ret = sc.myconnect("10.1.24.71", 33402)))
     {
         sleep(6);
     }
     ret = sc.setMsg("world");
     sc.setBuffer();
-    sc.sendMsg();
+//    sc.sendMsg();
     int i = 0;
     char msg[10] = "";
     while(true)
