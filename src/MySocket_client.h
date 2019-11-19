@@ -30,8 +30,22 @@ using namespace std;
 #endif
 struct MSGBODY
 {
+    int type;              // 0:int, 1:string, 2: byte(hex)
+    int length;            // length of msg
     BYTE msg[MAXLENGTH];
-    int length;
+    MSGBODY()
+    {
+        memset(this, 0, sizeof(MSGBODY));
+        type = 0;
+        length = 0;
+    }
+    MSGBODY(const MSGBODY & msgbody)
+    {
+        memset(this, 0, sizeof(MSGBODY));
+        type = msgbody.type;
+        length = msgbody.length;
+        memcpy(msg,msgbody.msg,length);
+    }
 };
 /*
  * use to form a string clientIP:clientPort--> serverIP:serverPort

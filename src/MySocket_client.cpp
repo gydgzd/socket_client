@@ -110,6 +110,7 @@ int MySocket_client::getMsg()
     else
     {
         mymsg.length = strlen(s);
+        mymsg.type = 1;
     }
     mp_msgQueueSend->push(mymsg);
     return 0;
@@ -123,7 +124,7 @@ int MySocket_client::sendMsg()
     char logHead[64] = "";
     sprintf(logHead, "%s:%d --> %s:%d ", m_conn.clientIP, m_conn.clientPort, m_conn.serverIP, m_conn.serverPort);
     // send
-    if( send(mn_socket_fd, mp_msgQueueSend->front().msg, mp_msgQueueSend->front().length, 0) < 0)
+    if( send(mn_socket_fd, &mp_msgQueueSend->front(), sizeof(MSGBODY), 0) < 0)
     {
         sprintf(logmsg, "ERROR: %s: send msg error: %s(errno: %d)", logHead, strerror(errno), errno);
         mylog.logException(logmsg);
@@ -135,7 +136,7 @@ int MySocket_client::sendMsg()
     mp_msgQueueSend->pop();
 
     char * p_hexLog = NULL;
-    if((recvBuf.length = recv(mn_socket_fd, recvBuf.msg, MAXLINE, 0)) == -1)
+    if((recvBuf.length = recv(mn_socket_fd, &recvBuf, MAXLINE, 0)) == -1)
     {
         // data isnot ready when errno = 11
         if(errno != 11)
