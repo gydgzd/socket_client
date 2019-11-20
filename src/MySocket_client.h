@@ -28,11 +28,13 @@ using namespace std;
 #ifndef BYTE
 #define BYTE unsigned char
 #endif
+#define MSGHEAD_LENGTH 8
 struct MSGBODY
 {
     int type;              // 0:int, 1:string, 2: byte(hex)
     int length;            // length of msg
     BYTE msg[MAXLENGTH];
+
     MSGBODY()
     {
         memset(this, 0, sizeof(MSGBODY));
@@ -64,25 +66,29 @@ public:
     int mn_socket_fd;
     MySocket_client();
     ~MySocket_client();
-    int init(queue<MSGBODY> * msgQToRecv, queue<MSGBODY> * msgQToSend);
 
-    int connectTo(const char* server_IP, int server_port);// connect
+    int init(queue<MSGBODY> * msgQToRecv, queue<MSGBODY> * msgQToSend);
+    int setBuffer();
+    int myconnect(const char* server_IP, int server_port);// connect
+    int reconnect();
     int setMsg(const char *);
-    int getMsg();
+
+    int recvMsg();
     int sendMsg();                 // transfer message
     int fileSend();                // transfer file
 
     Mylog mylog;
 private:
-
     struct sockaddr_in m_clientAddr;
     CONNECTION m_conn;
 
-    queue<MSGBODY>  m_msgQueueRecv;  // a queue to storage the msg
-    queue<MSGBODY>  m_msgQueueSend;
+    static queue<MSGBODY>  m_msgQueueRecv;  // a queue to storage the msg
+    static queue<MSGBODY>  m_msgQueueSend;
 
     queue<MSGBODY> * mp_msgQueueRecv; // pointer to queue
     queue<MSGBODY> * mp_msgQueueSend;
+
+    int logMsg(const MSGBODY *recvMsg, const char *logHead);
 
     int myclose();                  // close socket
 };
