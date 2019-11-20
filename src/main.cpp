@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 
     sc.init(&msgQueueRecv, &msgQueueSend);
     sc.mylog.logException("****************************BEGIN****************************");
-    while (-1 == (ret = sc.connectTo("172.18.10.11", 3401)))
+    while (-1 == (ret = sc.connectTo("172.18.10.129", 3401)))
     {
         sleep(5);
     }

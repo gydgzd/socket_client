@@ -188,60 +188,77 @@ int MySocket_client::recvMsg()
            return 0;
        }
     }
-    // recv msg, sometimes because of recvMsg.length is 0,it will return 0
-    // so it will confirm that recvMsg.length isnot 0
+    // recv head, to get the length of msg
     if(0 != recvMsg.length)
-       length = recv(mn_socket_fd, recvMsg.msg, recvMsg.length, 0);
-    if(length == -1)
     {
-       // data isnot ready when errno = 11
-       if(errno != 11)
-       {
-           sprintf(logmsg, "ERROR: %s: recv error: %d--%s",logHead, errno, strerror(errno) );
-           mylog.logException(logmsg);
-       }
-       //sleep(1);
-       usleep(10000);  // 10ms
-       recvMsg.length = 0;  // set it back to 0
-    }
-    else
-    {
-
-       if(strcmp((char *)recvMsg.msg,"exit\n")==0 || length == 0)
-       {
-           close(mn_socket_fd);
-           mylog.logException("INFO: Remote server disconnected.");
-           reconnect();
-           return 0;      // stop after reconnect
-       }
-       mp_msgQueueRecv->push(recvMsg);
-
-       if(recvMsg.type == 1)
+        if(recvMsg.type != 0 && recvMsg.type != 1 && recvMsg.type != 2)
+            return -1;
+        printf("type = %d, recvLen = %d,\n", recvMsg.type, recvMsg.length);
+        length = recv(mn_socket_fd, recvMsg.msg, recvMsg.length, 0);
+        if(length == -1)
         {
-            char logmsg[1024];
-            sprintf(logmsg, "INFO: %s recved: %s",logHead, recvMsg.msg);
-            mylog.logException(logmsg);
-        }
-       else if(recvMsg.type == 2)
-       {
-            try
+            if(errno != 11) // data isnot ready when errno = 11, log other error
             {
-            p_hexLog = new char[recvMsg.length*3 + 128];    // include the logHead
-            memset(p_hexLog, 0, recvMsg.length*3 + 128);
-            sprintf(p_hexLog, "INFO: %s recved: ", logHead);
-            int len = strlen(p_hexLog);
-            for(int i=0; i<recvMsg.length; i++)
-                sprintf(p_hexLog+len+3*i, "%02x ", (unsigned char)recvMsg.msg[i]);
-            mylog.logException(p_hexLog);
-            delete[] p_hexLog;
-           }
-            catch(bad_alloc& bad)
-           {
-           sprintf(logmsg,"ERROR: Failed to alloc mem when log hex: %s", bad.what());
-           mylog.logException(logmsg);
-           }
-       }
+                sprintf(logmsg, "ERROR: %s recv msg error: %d--%s",logHead, errno, strerror(errno) );
+                mylog.logException(logmsg);
+            }
+            if(errno == 9)
+            {
+                close(mn_socket_fd);
+                mylog.logException("ERROR: recv exit.");
+                return 0;
+            }
+            //sleep(1);
+            usleep(10000);  // 10ms
+            length = 0;  // set it back to 0
+            return -1;
+        }
+        else
+        {
+            if( length == 0 )
+            {
+                close(mn_socket_fd);
+                mylog.logException("ERROR: recv exit.");
+                return 0;
+            }
+            else
+            {
+                mp_msgQueueRecv->push(recvMsg);
+                if(recvMsg.type == 0)
+                {
+                    char logmsg[1024];
+                    sprintf(logmsg, "INFO: %s recved: %d",logHead, recvMsg.msg);
+                    mylog.logException(logmsg);
+                }
+                else if(recvMsg.type == 1)
+                {
+                    char logmsg[1024];
+                    sprintf(logmsg, "INFO: %s recved: %s",logHead, recvMsg.msg);
+                    mylog.logException(logmsg);
+                }
+                else if(recvMsg.type == 2)
+                {
+                    try
+                    {
+                        p_hexLog = new char[recvMsg.length*3 + 128];    // include the logHead
+                        memset(p_hexLog, 0, recvMsg.length*3 + 128);
+                        sprintf(p_hexLog, "INFO: %s recved: ", logHead);
+                        int len = strlen(p_hexLog);
+                        for(int i=0; i<recvMsg.length; i++)
+                            sprintf(p_hexLog+len+3*i, "%02x ", (unsigned char)recvMsg.msg[i]);
+                        mylog.logException(p_hexLog);
+                        delete[] p_hexLog;
+                    }
+                    catch(bad_alloc& bad)
+                    {
+                       sprintf(logmsg,"ERROR: Failed to alloc mem when log hex: %s", bad.what());
+                       mylog.logException(logmsg);
+                    }
+                }
+            }
+        }
     }
+
     memset(recvMsg.msg, 0, recvMsg.length);
     return 0;
 }
@@ -262,10 +279,10 @@ int MySocket_client::sendMsg()
         int err = errno;
         sprintf(logmsg, "ERROR: %s: send msg error: %s(errno: %d)", logHead, strerror(errno), errno);
         mylog.logException(logmsg);
-        if(err == EPIPE || err == 104 || err == 11 )
+        if(err == EPIPE || err == 104 || err == 11 || err == 9 )
         {
-        close(mn_socket_fd);
-        reconnect();
+            close(mn_socket_fd);
+            reconnect();
         }
     }
     else if(mp_msgQueueSend->front().type == 1)
