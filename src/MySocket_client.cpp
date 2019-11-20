@@ -66,7 +66,7 @@ int MySocket_client::setBuffer()
 /*
  * connect to a server
  */
-int MySocket_client::myconnect(const char* server_IP, int server_port)
+int MySocket_client::connectTo(const char* server_IP, int server_port)
 {
     char logmsg[512] = "";
     if( inet_pton(AF_INET, server_IP, &m_clientAddr.sin_addr) <= 0)

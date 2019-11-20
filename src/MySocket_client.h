@@ -69,7 +69,7 @@ public:
 
     int init(queue<MSGBODY> * msgQToRecv, queue<MSGBODY> * msgQToSend);
     int setBuffer();
-    int myconnect(const char* server_IP, int server_port);// connect
+    int connectTo(const char* server_IP, int server_port);// connect
     int reconnect();
     int setMsg(const char *);
 
