@@ -1,7 +1,9 @@
+/Debug/
 /Debug/src
 /Debug/socket_client
 /Release/src
 /Release/socket_client
 /log/
+/.settings
 .settings/language.settings.xml
 *.log
