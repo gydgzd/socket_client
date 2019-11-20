@@ -3,4 +3,5 @@
 /Release/src
 /Release/socket_client
 /log/
-
+.settings/language.settings.xml
+*.log
