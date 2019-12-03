@@ -27,7 +27,7 @@ MySocket_client::~MySocket_client()
  * initialize to use outside queue,
  * if not specified, use member queue
  */
-int MySocket_client::init(queue<MSGBODY> * msgQToRecv = &m_msgQueueRecv, queue<MSGBODY> * msgQToSend = &m_msgQueueSend)
+int MySocket_client::init(queue<DataPacket> * msgQToRecv = &m_msgQueueRecv, queue<DataPacket> * msgQToSend = &m_msgQueueSend)
 {
     char logmsg[512] = "";
     mylog.logException("****************************BEGIN****************************");
@@ -50,15 +50,15 @@ int MySocket_client::setBuffer()
     // get buffer
     int s_length, r_length;
     socklen_t optl = sizeof(s_length);
-    getsockopt(m_conn.socket_fd,SOL_SOCKET,SO_SNDBUF,&s_length,&optl);     //锟斤拷锟斤拷锟斤拷锟斤拷捉锟斤拷址锟斤拷投嘶锟斤拷锟斤拷锟斤拷锟斤拷锟较�
-    getsockopt(m_conn.socket_fd,SOL_SOCKET,SO_RCVBUF,&r_length,&optl);     //锟斤拷锟斤拷锟斤拷锟斤拷捉锟斤拷值慕锟斤拷斩说幕锟斤拷锟斤拷锟斤拷锟较�
+    getsockopt(m_conn.socket_fd,SOL_SOCKET,SO_SNDBUF,&s_length,&optl);     //
+    getsockopt(m_conn.socket_fd,SOL_SOCKET,SO_RCVBUF,&r_length,&optl);     //
     printf("send buffer = %d, recv buffer = %d\n",s_length, r_length);
  /* */
 
     // set buffer
-/*  int nRecvBufSize = 64*1024;//锟斤拷锟斤拷为64K
+/*  int nRecvBufSize = 64*1024;//
     setsockopt(m_conn.socket_fd,SOL_SOCKET,SO_RCVBUF,(const char*)&nRecvBufSize,sizeof(int));
-    int nSendBufSize = 64*1024;//锟斤拷锟斤拷为64K
+    int nSendBufSize = 64*1024;//
     setsockopt(m_conn.socket_fd,SOL_SOCKET,SO_SNDBUF,(const char*)&nSendBufSize,sizeof(int));
 */
     return 0;
@@ -100,8 +100,23 @@ int MySocket_client::connectTo(const char* server_IP, int server_port)
 
     sprintf(logmsg, "INFO: %s:%d --> %s:%d connected", m_conn.clientIP, m_conn.clientPort, m_conn.serverIP, m_conn.serverPort);
     mylog.logException(logmsg);
+    // get buffer
+    int s_length, r_length;
+    socklen_t optl = sizeof(s_length);
+    getsockopt(mn_socket_fd,SOL_SOCKET,SO_SNDBUF,&s_length,&optl);     //获得连接套接字发送端缓冲区的信息
+    getsockopt(mn_socket_fd,SOL_SOCKET,SO_RCVBUF,&r_length,&optl);     //获得连接套接字的接收端的缓冲区信息
+    sprintf(logmsg, "INFO: Default send buffer = %d, recv buffer = %d",s_length, r_length);
+    mylog.logException(logmsg);
+    // set buffer
+    int nRecvBufSize = 64*1024; //设置为64K max = 2 * /proc/sys/net/core/rmem_max
+    setsockopt(mn_socket_fd,SOL_SOCKET,SO_RCVBUF,(const char*)&nRecvBufSize,sizeof(int));
+    int nSendBufSize = 888*1024;//设置为64K max = 2 * /proc/sys/net/core/wmem_max
+    setsockopt(mn_socket_fd,SOL_SOCKET,SO_SNDBUF,(const char*)&nSendBufSize,sizeof(int));
+    sprintf(logmsg, "INFO: Set send buffer = %d, recv buffer = %d",nSendBufSize, nRecvBufSize);
+    mylog.logException(logmsg);
+
     // set nonlocking mode
-    int flags;
+/**/    int flags;
     if( (flags = fcntl(mn_socket_fd, F_GETFL, 0)) < 0)
     {
         sprintf(logmsg, "ERROR: fcntl error: %d--%s", errno, strerror(errno) );
@@ -109,6 +124,7 @@ int MySocket_client::connectTo(const char* server_IP, int server_port)
         return -1;
     }
     fcntl(mn_socket_fd, F_SETFL, flags | O_NONBLOCK);
+
     return 0;
 }
 
@@ -128,31 +144,52 @@ int MySocket_client::reconnect()
         sleep(6);
     }
     mylog.logException("INFO: reconnect successfully.");
+    // get buffer
+    int s_length, r_length;
+    socklen_t optl = sizeof(s_length);
+    getsockopt(mn_socket_fd,SOL_SOCKET,SO_SNDBUF,&s_length,&optl);     //获得连接套接字发送端缓冲区的信息
+    getsockopt(mn_socket_fd,SOL_SOCKET,SO_RCVBUF,&r_length,&optl);     //获得连接套接字的接收端的缓冲区信息
+    sprintf(logmsg, "INFO: Default send buffer = %d, recv buffer = %d",s_length, r_length);
+    mylog.logException(logmsg);
+    // set buffer
+    int nRecvBufSize = 64*1024;//设置为64K
+    setsockopt(mn_socket_fd,SOL_SOCKET,SO_RCVBUF,(const char*)&nRecvBufSize,sizeof(int));
+    int nSendBufSize = 888*1024;//设置为64K
+    setsockopt(mn_socket_fd,SOL_SOCKET,SO_SNDBUF,(const char*)&nSendBufSize,sizeof(int));
+    sprintf(logmsg, "INFO: Set send buffer = %d, recv buffer = %d\n",nSendBufSize, nRecvBufSize);
+    mylog.logException(logmsg);
     // set nonlocking mode
-    int flags;
+/*    int flags;
     if( (flags = fcntl(mn_socket_fd, F_GETFL, 0)) < 0)
     {
         sprintf(logmsg, "ERROR: fcntl error: %d--%s", errno, strerror(errno) );
         mylog.logException(logmsg);
         return -1;
     }
-    fcntl(mn_socket_fd, F_SETFL, flags | O_NONBLOCK);
+    fcntl(mn_socket_fd, F_SETFL, flags | O_NONBLOCK);*/
     return 0;
 }
 int MySocket_client::setMsg(const char *str)
 {
-    MSGBODY mymsg;
+/*    MSGBODY mymsg;
     mymsg.type = 1;
     memset(mymsg.msg, 0, sizeof(mymsg));
     int length = strlen(str);
     memcpy(mymsg.msg, str, length);
     mymsg.length = length;
     mp_msgQueueSend->push(mymsg);
+    */
+    DataPacket mymsg;
+    strcpy(mymsg.dstNo, "00199003660010301270");
+    strcpy(mymsg.srcNo, "00199003660010301269");
+    strcpy(mymsg.type, "msg");
+    mymsg.mymsg = {"TCP", 3402, str};
+    mp_msgQueueSend->push(mymsg);
     return 0;
 }
 int MySocket_client::recvMsg()
 {
-    MSGBODY recvMsg;
+    DataPacket recvMsg;
     recvMsg.length = 0;
     char logmsg[512] = "";
     char logHead[64] = "";
@@ -191,10 +228,13 @@ int MySocket_client::recvMsg()
     // recv head, to get the length of msg
     if(0 != recvMsg.length)
     {
-        if(recvMsg.type != 0 && recvMsg.type != 1 && recvMsg.type != 2)
+    //    if(recvMsg.type != 0 && recvMsg.type != 1 && recvMsg.type != 2)
+        if(0 != strcmp(recvMsg.type, "file")
+                &&    0 != strcmp(recvMsg.type, "msg")
+                &&    0 != strcmp(recvMsg.type, "cmd"))
             return -1;
-        printf("type = %d, recvLen = %d,\n", recvMsg.type, recvMsg.length);
-        length = recv(mn_socket_fd, recvMsg.msg, recvMsg.length, 0);
+        printf("type = %s, recvLen = %d,\n", recvMsg.type, recvMsg.length);
+        length = recv(mn_socket_fd, &recvMsg.mymsg, recvMsg.length, 0);
         if(length == -1)
         {
             if(errno != 11) // data isnot ready when errno = 11, log other error
@@ -224,7 +264,25 @@ int MySocket_client::recvMsg()
             else
             {
                 mp_msgQueueRecv->push(recvMsg);
-                if(recvMsg.type == 0)
+                if(strcmp(recvMsg.type, "file") == 0)
+                {
+                    char logmsg[1024];
+                    sprintf(logmsg, "INFO: %s recved file: %s",logHead, recvMsg.myfile.path);
+                    mylog.logException(logmsg);
+                }
+                else if(strcmp(recvMsg.type, "msg") == 0)
+                {
+                    char logmsg[1024];
+                    sprintf(logmsg, "INFO: %s recved msg: %s",logHead, recvMsg.mymsg.msg);
+                    mylog.logException(logmsg);
+                }
+                else if(strcmp(recvMsg.type, "cmd") == 0)
+                {
+                    char logmsg[1024];
+                    sprintf(logmsg, "INFO: %s recved msg: %s",logHead, recvMsg.mymsg.msg);
+                    mylog.logException(logmsg);
+                }
+            /*    if(recvMsg.type == 0)
                 {
                     char logmsg[1024];
                     sprintf(logmsg, "INFO: %s recved: %d",logHead, recvMsg.msg);
@@ -255,11 +313,10 @@ int MySocket_client::recvMsg()
                        mylog.logException(logmsg);
                     }
                 }
+                */
             }
         }
     }
-
-    memset(recvMsg.msg, 0, recvMsg.length);
     return 0;
 }
 int MySocket_client::sendMsg()
@@ -271,32 +328,58 @@ int MySocket_client::sendMsg()
     if(mp_msgQueueSend->empty())
     {
         sleep(1);
+        mylog.logException("Sleep for one second");
         return 0;
     }
-    int sendLen = sizeof(mp_msgQueueSend->front().length) + sizeof(mp_msgQueueSend->front().type) + mp_msgQueueSend->front().length;
-    if( send(mn_socket_fd, &mp_msgQueueSend->front(), sendLen, 0) < 0)
+    int sendLen = mp_msgQueueSend->front().length + MSGHEAD_LENGTH + MSGTAIL_LENGTH;
+    DataPacket tmpPkt = mp_msgQueueSend->front();
+    void *pos = &tmpPkt;
+    int ret = 0, isSend = 0;
+    while(isSend == 0)
     {
-        int err = errno;
-        sprintf(logmsg, "ERROR: %s: send msg error: %s(errno: %d)", logHead, strerror(errno), errno);
-        mylog.logException(logmsg);
-        if(err == EPIPE || err == 104 || err == 11 || err == 9 )
+        ret = send(mn_socket_fd, pos, sendLen, 0);
+        if(ret < 0)
         {
-            close(mn_socket_fd);
-            reconnect();
+            int err = errno;
+            if(err != 11) // data isnot ready when errno = 11, log other error
+            {
+                sprintf(logmsg, " %s send msg error: %d--%s",logHead, errno, strerror(errno) );
+                mylog.logException(logmsg);
+            }
+            if(err == EPIPE || err == 104 || err == 9 )
+            {
+                close(mn_socket_fd);
+                reconnect();
+            }
+            usleep(10000);
+        }
+        else if (ret < sendLen)
+        {
+            printf("Send is not enough: %d < %d\n", ret, sendLen);
+            pos += ret;
+            sendLen -= ret;
+            continue;
+        }
+        else
+        {
+            if( strcmp(mp_msgQueueSend->front().type, "msg") == 0)
+            {
+                sprintf(logmsg, "INFO: %s: send %dB: %s", logHead, sendLen, mp_msgQueueSend->front().mymsg.msg);
+                printf("%s\n", logmsg);
+                mylog.logException(logmsg);
+                mp_msgQueueSend->pop();
+                isSend = 1;
+            }
         }
     }
-    else if(mp_msgQueueSend->front().type == 1)
-    {
-        sprintf(logmsg, "INFO: %s: send: %s", logHead, mp_msgQueueSend->front().msg);
-        mylog.logException(logmsg);
-    }
-    mp_msgQueueSend->pop();
+
     return 0;
 }
 /*
  * log Msg
  */
-int MySocket_client::logMsg(const MSGBODY *recvMsg, const char *logHead)
+/*
+int MySocket_client::logMsg(const DataPacket *recvMsg, const char *logHead)
 {
     char logmsg[256] = "";
     if(2 == recvMsg->type)             //  hex
@@ -325,4 +408,4 @@ int MySocket_client::logMsg(const MSGBODY *recvMsg, const char *logHead)
         mylog.logException(logmsg);
     }
     return 0;
-}
+}*/

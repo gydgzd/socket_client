@@ -7,7 +7,7 @@
 
 #include "Mylog.h"
 
-Mylog::Mylog():max_filesize(2048000)
+Mylog::Mylog():max_filesize(204800000)
 {
 	m_filesize = -1;
 	mstr_logfile = "log/program.log";
@@ -18,7 +18,7 @@ Mylog::Mylog():max_filesize(2048000)
 	_mkdir("./log");
 #endif
 }
-Mylog::Mylog(const char * filename):max_filesize(2048000)
+Mylog::Mylog(const char * filename):max_filesize(204800000)
 {
 	m_filesize = -1;
 	mstr_logfile = filename;
@@ -99,14 +99,14 @@ int Mylog::shrinkLogFile()
 	return 0;
 }
 // mainly for log hexadecimal
-int logException(const unsigned char * logMsg, int length)
+int Mylog::logException(const unsigned char * logMsg, int length)
 {
 
 
 
 	return 0;
 }
-int Mylog::logException(const string& logMsg)
+int Mylog::logException(const std::string& logMsg)
 {
 	//open log file
 #ifdef __linux
@@ -115,15 +115,15 @@ int Mylog::logException(const string& logMsg)
 #ifdef WINVER
 	_mkdir("./log");
 #endif
-	ofstream ofs(mstr_logfile.c_str(), ios::app);  //c++11 support ofs(mstr_logFileName ,ios::app)
+	std::ofstream ofs(mstr_logfile.c_str(), std::ios::app);  //c++11 support ofs(mstr_logFileName ,ios::app)
 	if (ofs.fail())
 	{
-		cerr << "Failed to open log file. " <<mstr_logfile<<":"<<strerror(errno)<< endl;
-		return -1;
+	    std::cerr << "Failed to open log file. " <<mstr_logfile<<":"<<strerror(errno)<< std::endl;
+	    return -1;
 	}
-	string mytime = getLocalTime("%Y-%m-%d %H:%M:%S");
+	std::string mytime = getLocalTimeUs("%Y-%m-%d %H:%M:%S");
 	ofs << mytime <<"  ";
-	ofs << logMsg << endl;
+	ofs << logMsg << std::endl;
 	ofs.close();
 	checkSize();
 	return 0;
@@ -139,20 +139,20 @@ int Mylog::logException(sql::SQLException &e, const char* file, const char* func
 	_mkdir("./log");
 #endif
 	//string fullPath = "./log"+logFileName;
-	ofstream ofs(mstr_logfile.c_str(), ios::app);
+	std::ofstream ofs(mstr_logfile.c_str(), std::ios::app);
 	if (ofs.fail())
 	{
-		cerr << "Failed to open log file. " <<mstr_logfile<<":"<<strerror(errno)<< endl;
+	    std::cerr << "Failed to open log file. " <<mstr_logfile<<":"<<strerror(errno)<< std::endl;
 		return -1;
 	}
-	string mytime = getLocalTime();
+	std::string mytime = getLocalTimeUs("%Y-%m-%d %H:%M:%S");
 	ofs << mytime <<"  ";
 	ofs << "# ERR: SQLException in " << file;
-	ofs << "(" << func << ") on line " << line << endl;
+	ofs << "(" << func << ") on line " << line << std::endl;
 	ofs << "                     # ERR: " << e.what();
 	ofs << " (MySQL error code: " << e.getErrorCode();
-	ofs << ", SQLState: " << e.getSQLState() << " )" << endl;
-	ofs << endl;
+	ofs << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+	ofs << std::endl;
 	ofs.close();
 	checkSize();
 	return 0;

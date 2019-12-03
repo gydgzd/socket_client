@@ -25,7 +25,7 @@
 // my head files
 //#include "sql_conn_cpp.h"
 #include "getDate.h"
-using namespace std;
+//using namespace std;
 /*
  * lock
  */
@@ -36,17 +36,16 @@ public:
 	~Mylog();
 	void setLogFile(const char *filename);
 	void setMaxFileSize(long maxsize);
-	int logException(const string& logMsg);
+	int logException(const std::string& logMsg);
 	int logException(const unsigned char * logMsg, int length);  // mainly for log hexadecimal
 //	int logException(sql::SQLException &e, const char* file, const char* func, const int& line);
 	int checkSize();
 	int shrinkLogFile();
 
-	string mstr_logfile;
+	std::string mstr_logfile;
 private:
-	unsigned long m_filesize;
+	long m_filesize;
 	long max_filesize;
-
 
 };
 

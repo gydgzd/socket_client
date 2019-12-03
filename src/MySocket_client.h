@@ -28,7 +28,7 @@ using namespace std;
 #ifndef BYTE
 #define BYTE unsigned char
 #endif
-#define MSGHEAD_LENGTH 8
+
 struct MSGBODY
 {
     int type;              // 0:int, 1:string, 2: byte(hex)
@@ -49,6 +49,61 @@ struct MSGBODY
         memcpy(msg,msgbody.msg,length);
     }
 };
+
+#define MSGHEAD_LENGTH 80
+#define MSGTAIL_LENGTH 4
+
+struct MyFile
+{
+    char path[128];    // absolute path of the file
+    char dstPath[128]; // absolute path to put the file to
+
+};
+struct MyMsg           //for send msg to another program
+{
+    char proto[8] ; // TCP
+    int  port;
+    char msg[800];  // msg to send
+    MyMsg()
+    {
+        strcpy(proto, "TCP");
+        port = 3402;
+        memset(msg, 0, sizeof(msg));
+    }
+    MyMsg(const char *_proto, int _Port, const char* _msg)
+    {
+        strcpy(proto, _proto);
+        port = _Port;
+        strcpy(msg, _msg);
+    }
+};
+struct MyCmd
+{
+    char cmd[256];
+};
+struct DataPacket
+{
+    char Head[4];
+    char dstNo[32];
+    char srcNo[32];
+    char type[8];      // file;msg;cmd;
+    int  length;       // size
+    union
+    {
+        MyFile myfile;
+        MyMsg  mymsg;
+        MyCmd  mycmd;
+    };
+    char Tail[4];
+
+    DataPacket()
+    {
+        memset(this, 0, sizeof(*this));
+        memcpy(Head, "##**", 4);
+        memcpy(Tail, "**##", 4);
+        length = sizeof(*this) - MSGHEAD_LENGTH - MSGTAIL_LENGTH;
+    }
+};
 /*
  * use to form a string clientIP:clientPort--> serverIP:serverPort
  */
@@ -67,7 +122,7 @@ public:
     MySocket_client();
     ~MySocket_client();
 
-    int init(queue<MSGBODY> * msgQToRecv, queue<MSGBODY> * msgQToSend);
+    int init(queue<DataPacket> * msgQToRecv, queue<DataPacket> * msgQToSend);
     int setBuffer();
     int connectTo(const char* server_IP, int server_port);// connect
     int reconnect();
@@ -82,13 +137,16 @@ private:
     struct sockaddr_in m_clientAddr;
     CONNECTION m_conn;
 
-    static queue<MSGBODY>  m_msgQueueRecv;  // a queue to storage the msg
-    static queue<MSGBODY>  m_msgQueueSend;
+    static queue<DataPacket>  m_msgQueueRecv;  // a queue to storage the msg
+    static queue<DataPacket>  m_msgQueueSend;
 
-    queue<MSGBODY> * mp_msgQueueRecv; // pointer to queue
-    queue<MSGBODY> * mp_msgQueueSend;
+//    queue<MSGBODY> * mp_msgQueueRecv; // pointer to queue
+//    queue<MSGBODY> * mp_msgQueueSend;
 
-    int logMsg(const MSGBODY *recvMsg, const char *logHead);
+    queue<DataPacket> * mp_msgQueueRecv; // pointer to queue
+    queue<DataPacket> * mp_msgQueueSend;
+
+    int logMsg(const DataPacket *recvMsg, const char *logHead);
 
     int myclose();                  // close socket
 };

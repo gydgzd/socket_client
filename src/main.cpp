@@ -17,12 +17,12 @@ int main(int argc, char **argv)
     MySocket_client sc;
     int ret = 0;
 
-    queue<MSGBODY> msgQueueRecv;
-    queue<MSGBODY> msgQueueSend;
+    queue<DataPacket> msgQueueRecv;
+    queue<DataPacket> msgQueueSend;
 
     sc.init(&msgQueueRecv, &msgQueueSend);
     sc.mylog.logException("****************************BEGIN****************************");
-    while (-1 == (ret = sc.connectTo("172.18.10.129", 3401)))
+    while (-1 == (ret = sc.connectTo(argv[1], 3401)))
     {
         sleep(5);
     }
@@ -38,8 +38,8 @@ int main(int argc, char **argv)
         ret = sc.setMsg(msg);
         if(-1 == ret)       // error
             continue;
-        usleep(10000);
-        ret = sc.recvMsg();
+        usleep(1000);
+    //    ret = sc.recvMsg();
         if(ret == -1)
             break;
         sc.sendMsg();
