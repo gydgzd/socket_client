@@ -63,7 +63,7 @@ struct MyMsg           //for send msg to another program
 {
     char proto[8] ; // TCP
     int  port;
-    char msg[800];  // msg to send
+    char msg[2800];  // msg to send
     MyMsg()
     {
         strcpy(proto, "TCP");
