@@ -180,7 +180,7 @@ int MySocket_client::setMsg(const char *str)
     mp_msgQueueSend->push(mymsg);
     */
     DataPacket mymsg;
-    mymsg.length = sizeof(mymsg.mymsg) + 4;
+    mymsg.length = sizeof(mymsg.mymsg);
     strcpy(mymsg.dstNo, "00199003660010301270");
     strcpy(mymsg.srcNo, "00199003660010301269");
     strcpy(mymsg.type, "msg");
