@@ -9,7 +9,7 @@
 #include <iostream>
 using namespace std;
 #include "MySocket_client.h"
-
+#include "md5.h"
 extern int fileTransfer(int argc, char **argv);
 extern int socket_client(char* server_IP);
 int main(int argc, char **argv)
@@ -31,6 +31,10 @@ int main(int argc, char **argv)
 "2. VAT reform will be deepened: we will reduce the current rate of 16 percent in manufacturing and other industries to 13 percent, and lower the rate in the transportation, construction, and other industries from 10 to 9 percent, thus ensuring that tax burdens in our main industries are meaningfully reduced; keep the lowest bracket rate unchanged at 6 percent, while adopting supporting measures, like increased tax deductions for producer and consumer services, to see that in all industries tax burdens only go down, not up; and continue making progress toward cutting the number of VAT brackets from three to two and simplifying the VAT system. "
 "3. We will ensure that the general-benefit tax cut policies issued at the start of the year for small and micro businesses are put into effect. Our moves to cut tax on this occasion aim at an accommodative effect to strengthen the basis for sustained growth while also considering the need to ensure fiscal sustainability; are a major measure to lighten the burden on businesses and boost market dynamism; are an important reform to improve the tax system and achieve better income distribution; and are the result of a major decision taken at the macro policy level in support of the efforts to ensure stable economic growth, employment, and structural adjustments."
 ;
+    cout << md5(msg) << endl;
+    cout << md5("nice") << endl;
+    MD5 md;
+    cout << md.fileMD5("/home/gyd/project/c/ServerProbe/java")<<endl;;
     ret = sc.setMsg(msg);
     sc.setBuffer();
 //    sc.sendMsg();

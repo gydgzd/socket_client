@@ -180,7 +180,7 @@ int MySocket_client::setMsg(const char *str)
     mp_msgQueueSend->push(mymsg);
     */
     DataPacket mymsg;
-    mymsg.length = sizeof(mymsg.mymsg);
+    mymsg.length = sizeof(MyMsg);
     strcpy(mymsg.dstNo, "00199003660010301270");
     strcpy(mymsg.srcNo, "00199003660010301269");
     strcpy(mymsg.type, "msg");
@@ -198,7 +198,7 @@ int MySocket_client::recvMsg()
     int length = 0;
     char * p_hexLog = NULL;
     // recv head, to get the length of msg
-    length = recv(mn_socket_fd, &recvMsg, MSGHEAD_LENGTH, 0);
+    length = recv(mn_socket_fd, &recvMsg, PKTHEAD_LENGTH, 0);
     if(length == -1)     // recv
     {
         if(errno != 11) // data isnot ready when errno = 11, log other error
@@ -332,7 +332,7 @@ int MySocket_client::sendMsg()
         mylog.logException("Sleep for one second");
         return 0;
     }
-    int sendLen = mp_msgQueueSend->front().length + MSGHEAD_LENGTH + MSGTAIL_LENGTH;
+    int sendLen = mp_msgQueueSend->front().length + PKTHEAD_LENGTH + PKTTAIL_LENGTH;
     DataPacket tmpPkt = mp_msgQueueSend->front();
     void *pos = &tmpPkt;
     int ret = 0, isSend = 0;

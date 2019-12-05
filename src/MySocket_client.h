@@ -29,6 +29,10 @@ using namespace std;
 #define BYTE unsigned char
 #endif
 
+#define PKTHEAD_LENGTH 80
+#define PKTTAIL_LENGTH 4
+#define MSGBUFFER_LENGTH 65536
+
 struct MSGBODY
 {
     int type;              // 0:int, 1:string, 2: byte(hex)
@@ -49,9 +53,6 @@ struct MSGBODY
         memcpy(msg,msgbody.msg,length);
     }
 };
-
-#define MSGHEAD_LENGTH 80
-#define MSGTAIL_LENGTH 4
 
 struct MyFile
 {
@@ -74,6 +75,7 @@ struct MyMsg           //for send msg to another program
     {
         strcpy(proto, _proto);
         port = _Port;
+        memset(msg, 0, sizeof(msg));
         strcpy(msg, _msg);
     }
 };
@@ -101,7 +103,7 @@ struct DataPacket
         memset(this, 0, sizeof(*this));
         memcpy(Head, "##**", 4);
         memcpy(Tail, "**##", 4);
-        length = sizeof(*this) - MSGHEAD_LENGTH - MSGTAIL_LENGTH;
+        length = sizeof(*this) - PKTHEAD_LENGTH - PKTTAIL_LENGTH;
     }
 };
 /*
