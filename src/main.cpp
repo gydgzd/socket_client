@@ -13,13 +13,6 @@ using namespace std;
 extern int fileTransfer(int argc, char **argv);
 extern int socket_client(char* server_IP);
 
-
-struct llCmd
-{
-    int a;
-    char cmd[0];
-};
-
 int main(int argc, char **argv)
 {
     MySocket_client sc;
